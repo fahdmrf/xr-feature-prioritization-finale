@@ -68,4 +68,4 @@ The tests check that:
 
 ## License and citation
 
-Add the license of your choice (for example MIT for the code and CC BY 4.0 for the data) and the citation of the article once published.
+If you use this tool, please cite: Maaroufi, F., Danglade, F., Chardonnet, J.-R. (2026). Prioritizing Industrial XR Engineering Features Across Technology and Application Domains.
