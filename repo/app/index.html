@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XR Engineering Feature Prioritization Tool</title>
+<style>
+  :root{--navy:#14284b;--blue:#3f6ea5;--line:#d9dee6;--muted:#5b6678;--bg:#f2f4f8;--warn:#9a5b00;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--navy);padding:24px}
+  .window{max-width:1080px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 24px rgba(20,40,75,.10);overflow:hidden}
+  .titlebar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);background:#f7f8fb}
+  .dot{width:12px;height:12px;border-radius:50%} .r{background:#ff5f57}.y{background:#febc2e}.g{background:#28c840}
+  .titlebar h1{flex:1;text-align:center;font-size:15px;font-weight:600;margin:0 40px 0 0}
+  .layout{display:grid;grid-template-columns:290px 1fr}
+  .side{padding:22px 20px;border-right:1px solid var(--line);background:#fbfcfe}
+  .side h2{font-size:16px;margin:0 0 14px}
+  label{display:block;font-size:12.5px;color:var(--muted);margin:14px 0 5px}
+  select{width:100%;padding:9px 10px;border:1px solid #c5ccd8;border-radius:8px;background:#fff;font-size:14px;color:var(--navy)}
+  .support{margin-top:20px;font-size:12.5px;color:var(--muted);line-height:1.6}
+  .support b{color:var(--navy)} .warn{color:var(--warn);font-weight:600}
+  .params{margin-top:18px;font-size:12px;color:var(--muted)} .params summary{cursor:pointer}
+  .params table{margin-top:6px;border-collapse:collapse;width:100%} .params td{padding:2px 0}
+  .params td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+  .main{padding:22px 26px;min-width:0}
+  .tabs{display:flex;gap:6px;margin-bottom:14px}
+  .tab{border:1px solid var(--line);background:#fff;padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--navy)}
+  .tab[aria-selected="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .head h2{font-size:16px;margin:0} .cfg{font-size:12.5px;color:var(--muted);margin:6px 0 12px}
+  .actions{display:flex;gap:8px}
+  button.sm{border:1px solid #c5ccd8;background:#fff;border-radius:8px;padding:6px 11px;font-size:12.5px;cursor:pointer;color:var(--navy)}
+  table.res{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.res th{font-size:12px;color:var(--muted);font-weight:600;text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+  table.res td{padding:9px 6px;border-bottom:1px solid #eef0f4;vertical-align:middle}
+  td.rk{width:44px;color:var(--muted)} td.bar{width:26%} td.sc{width:70px;text-align:right;font-variant-numeric:tabular-nums}
+  .barwrap{height:13px;background:transparent} .bar i{display:block;height:13px;background:var(--blue);border-radius:2px}
+  .note{font-size:12px;color:var(--muted);margin-top:12px}
+  .low{background:#fff7e6;border:1px solid #f0d49b;color:var(--warn);padding:8px 10px;border-radius:8px;font-size:12.5px;margin-bottom:10px}
+  .src{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+  @media(max-width:820px){.layout{grid-template-columns:1fr}.side{border-right:0;border-bottom:1px solid var(--line)}td.bar{display:none}}
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><h1>XR Engineering Feature Prioritization Tool</h1></div>
+  <div class="layout">
+    <aside class="side">
+      <h2>XR configuration</h2>
+      <label for="technology">XR technology</label><select id="technology"></select>
+      <label for="hardware">XR hardware</label><select id="hardware"></select>
+      <label for="domain">Application domain</label><select id="domain"></select>
+      <label for="activity">Industrial activity</label><select id="activity"></select>
+      <div class="support" id="support"></div>
+      <details class="params"><summary>Model parameters</summary><table id="params"></table></details>
+    </aside>
+    <main class="main">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tab-ef" aria-selected="true">EF ranking</button>
+        <button class="tab" role="tab" id="tab-cr" aria-selected="false">CR weights</button>
+      </div>
+      <section id="view-ef">
+        <div class="head"><h2 id="ef-title"></h2>
+          <div class="actions"><button class="sm" id="toggle"></button><button class="sm" id="export">Export CSV</button></div></div>
+        <div class="cfg" id="cfg"></div>
+        <div id="low"></div>
+        <table class="res"><thead><tr><th>Rank</th><th>Engineering Feature</th><th>Priority</th><th></th></tr></thead><tbody id="ef-body"></tbody></table>
+        <div class="note">Priority = normalised priority score P<sub>j</sub> (sums to 1 over the 33 EFs).</div>
+      </section>
+      <section id="view-cr" hidden>
+        <div class="head"><h2>Context-specific CR weights (37 CRs)</h2></div>
+        <div class="cfg" id="cfg2"></div>
+        <table class="res"><thead><tr><th>CR</th><th>Customer requirement</th><th>W<sub>indus</sub></th><th>W<sub>Litt</sub></th><th>W<sub>T</sub></th></tr></thead><tbody id="cr-body"></tbody></table>
+        <div class="note">W<sub>T</sub> = &alpha;&middot;W<sub>indus</sub> + (1 &minus; &alpha;)&middot;W<sub>Litt</sub>, with W<sub>Litt</sub> = &Sigma;<sub>d</sub> &beta;<sub>d</sub>&middot;W<sub>i,m<sub>d</sub></sub>. The weights sum to 1.</div>
+      </section>
+    </main>
+  </div>
+</div>
+<script>/* Calculation engine of the XR Engineering Feature Prioritization Tool.
+ * Pure functions, no DOM, no dependency. Works in browsers and in Node.js.
+ *
+ *   W_{i,m}      = p_{i,m} / sum_k p_{k,m},  p_{i,m} = n_{i,m} / N_m
+ *   W_Litt,i     = sum_d beta_d * W_{i,m_d(f)}
+ *   W_T,i        = alpha * W_indus,i + (1 - alpha) * W_Litt,i
+ *   P_j          = sum_i W_T,i * R_ij / sum_k R_ik      (normalised to sum to 1 over the EFs)
+ */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.XRP = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  var DIMENSIONS = ['xr_technology', 'application_domain', 'industrial_activity', 'hardware_configuration'];
+  var XR_TECHNOLOGIES = ['AR', 'VR'];
+  var DOMAINS = ['Design', 'Production', 'Maintenance'];
+  var ACTIVITIES = [
+    'Assembly', 'Maintenance and Repair', 'Quality Control and Inspection', 'Product Design',
+    'System Design', 'Operator Training', 'Operator Assistance', 'Industrial Safety Awareness',
+    'Machine/Robot/Production-System Monitoring', 'Ergonomic Evaluation'
+  ];
+  var HARDWARE_BY_TECHNOLOGY = {
+    AR: ['AR HMD only', 'Handheld/Mobile XR Device only', 'AR HMD + Handheld/Mobile XR Device only'],
+    VR: ['VR HMD only', 'VR HMD + XR Controllers', 'VR HMD + XR Controllers + Motion/Positional Tracking']
+  };
+  var LOW_SUPPORT_THRESHOLD = 4;
+
+  function memberOf(study, dimension, modality) {
+    switch (dimension) {
+      case 'xr_technology': return study.xr_technology === modality;
+      case 'application_domain': return study.application_domain === modality;
+      case 'industrial_activity': return study.activities.indexOf(modality) !== -1;
+      case 'hardware_configuration': return study.hardware_configuration === modality;
+      default: throw new Error('Unknown dimension ' + dimension);
+    }
+  }
+
+  function modalityWeights(data, dimension, modality) {
+    var sel = data.studies.filter(function (s) { return memberOf(s, dimension, modality); });
+    var p = data.crs.map(function (c) {
+      var n = sel.filter(function (s) { return s.criteria.indexOf(c.id) !== -1; }).length;
+      return n / sel.length;
+    });
+    var total = p.reduce(function (a, b) { return a + b; }, 0);
+    return { weights: p.map(function (v) { return v / total; }), n: sel.length };
+  }
+
+  function prioritize(data, config, alpha, beta) {
+    alpha = alpha === undefined ? data.params.alpha : alpha;
+    beta = beta || data.params.beta;
+    var chosen = {
+      xr_technology: config.technology, application_domain: config.domain,
+      industrial_activity: config.activity, hardware_configuration: config.hardware
+    };
+    var nCR = data.crs.length, nEF = data.efs.length, i, j, d;
+    var wLit = new Array(nCR).fill(0), support = {}, byDimension = {};
+    DIMENSIONS.forEach(function (dim) {
+      var mw = modalityWeights(data, dim, chosen[dim]);
+      support[dim] = mw.n; byDimension[dim] = mw.weights;
+      for (i = 0; i < nCR; i++) wLit[i] += beta[dim] * mw.weights[i];
+    });
+    var wT = wLit.map(function (v, k) { return alpha * data.crs[k].w_indus + (1 - alpha) * v; });
+    var raw = new Array(nEF).fill(0);
+    for (i = 0; i < nCR; i++) {
+      var rowSum = data.R[i].reduce(function (a, b) { return a + b; }, 0);
+      for (j = 0; j < nEF; j++) raw[j] += wT[i] * data.R[i][j] / rowSum;
+    }
+    var total = raw.reduce(function (a, b) { return a + b; }, 0);
+    var scores = raw.map(function (v) { return v / total; });
+    var order = scores.map(function (_, k) { return k; }).sort(function (a, b) { return scores[b] - scores[a] || a - b; });
+    return {
+      config: chosen, support: support, byDimension: byDimension, wLit: wLit, wT: wT, scores: scores,
+      ranking: order.map(function (k, pos) {
+        return { rank: pos + 1, id: data.efs[k].id, name: data.efs[k].name, category: data.efs[k].category, score: scores[k] };
+      })
+    };
+  }
+
+  function validConfigurations() {
+    var out = [];
+    XR_TECHNOLOGIES.forEach(function (t) {
+      HARDWARE_BY_TECHNOLOGY[t].forEach(function (h) {
+        DOMAINS.forEach(function (d) { ACTIVITIES.forEach(function (a) {
+          out.push({ technology: t, hardware: h, domain: d, activity: a });
+        }); });
+      });
+    });
+    return out;
+  }
+
+  return {
+    DIMENSIONS: DIMENSIONS, XR_TECHNOLOGIES: XR_TECHNOLOGIES, DOMAINS: DOMAINS, ACTIVITIES: ACTIVITIES,
+    HARDWARE_BY_TECHNOLOGY: HARDWARE_BY_TECHNOLOGY, LOW_SUPPORT_THRESHOLD: LOW_SUPPORT_THRESHOLD,
+    modalityWeights: modalityWeights, prioritize: prioritize, validConfigurations: validConfigurations
+  };
+});
+</script>
+<script>
+var DATA = {"params":{"alpha":0.1462,"beta":{"xr_technology":0.259289,"application_domain":0.255971,"industrial_activity":0.303744,"hardware_configuration":0.180996},"n_valid_questionnaire_responses_cr":24,"n_valid_questionnaire_responses_ef":22,"n_studies":55},"crs":[{"id":"CR1","name":"Ability of acting the same way as in the real world","w_indus":0.0324},{"id":"CR2","name":"Ability of creating surprising effect","w_indus":0.0301},{"id":"CR3","name":"Ability of displaying virtual and real objects","w_indus":0.019},{"id":"CR4","name":"Ability of sharing the environment with other users","w_indus":0.0278},{"id":"CR5","name":"Ability to engage different senses","w_indus":0.0329},{"id":"CR6","name":"Ability to feel sensory feedback","w_indus":0.0269},{"id":"CR7","name":"Ability to interact naturally and intuitively","w_indus":0.0222},{"id":"CR8","name":"Ability to perceive realistic feedback","w_indus":0.0245},{"id":"CR9","name":"Ability to Search for and Recognize Virtual Objects","w_indus":0.0287},{"id":"CR10","name":"Accuracy of representation to Requirements","w_indus":0.0204},{"id":"CR11","name":"Application development cost","w_indus":0.0264},{"id":"CR12","name":"Capacity for Real Object Tracking","w_indus":0.0195},{"id":"CR13","name":"Capacity of anticipating the results of actions","w_indus":0.0347},{"id":"CR14","name":"Capacity of innovating","w_indus":0.0259},{"id":"CR15","name":"Capacity of interacting freely","w_indus":0.0324},{"id":"CR16","name":"Capacity of synchronizing real movements with those...","w_indus":0.0134},{"id":"CR17","name":"Capacity to adapt to the new software updates","w_indus":0.0338},{"id":"CR18","name":"Capacity to feel emotional and cognitive engagement","w_indus":0.0306},{"id":"CR19","name":"Capacity to motivate the user","w_indus":0.0278},{"id":"CR20","name":"Capacity to provide pleasure and satisfactory","w_indus":0.0213},{"id":"CR21","name":"Cognitive load","w_indus":0.0259},{"id":"CR22","name":"Data communication","w_indus":0.0287},{"id":"CR23","name":"Data security","w_indus":0.0278},{"id":"CR24","name":"Ease of content creation","w_indus":0.0296},{"id":"CR25","name":"Ease of Handling","w_indus":0.0222},{"id":"CR26","name":"Ease of learning","w_indus":0.0264},{"id":"CR27","name":"Ease of setup","w_indus":0.0292},{"id":"CR28","name":"Ergonomic quality","w_indus":0.0185},{"id":"CR29","name":"Implementation cost","w_indus":0.032},{"id":"CR30","name":"Latency","w_indus":0.0361},{"id":"CR31","name":"Relevance of content","w_indus":0.0301},{"id":"CR32","name":"Reliability","w_indus":0.0269},{"id":"CR33","name":"Robustness","w_indus":0.0366},{"id":"CR34","name":"Smooth Navigation","w_indus":0.0176},{"id":"CR35","name":"User health","w_indus":0.032},{"id":"CR36","name":"User safety","w_indus":0.0287},{"id":"CR37","name":"Visual Quality","w_indus":0.0208}],"efs":[{"id":"EF1","name":"User profile-based experience customisation","category":"User Context and Profiling"},{"id":"EF2","name":"Industrial domain-based experience adaptation","category":"User Context and Profiling"},{"id":"EF3","name":"Step-by-step user guidance","category":"User Context and Profiling"},{"id":"EF4","name":"User-defined input data integration","category":"User Context and Profiling"},{"id":"EF5","name":"Physical environment detection and adaptation","category":"User Context and Profiling"},{"id":"EF6","name":"Multi-paradigm XR operation","category":"XR Technical Infrastructure"},{"id":"EF7","name":"Multi-device display rendering","category":"XR Technical Infrastructure"},{"id":"EF8","name":"Peripheral device interfacing","category":"XR Technical Infrastructure"},{"id":"EF9","name":"Spatial and object position tracking","category":"XR Technical Infrastructure"},{"id":"EF10","name":"Multi-format digital content handling","category":"Digital Content Management"},{"id":"EF11","name":"External asset importation","category":"Digital Content Management"},{"id":"EF12","name":"In-application digital content creation","category":"Digital Content Management"},{"id":"EF13","name":"Dynamic real-time content update","category":"Digital Content Management"},{"id":"EF14","name":"Runtime rendering performance optimisation","category":"Digital Content Management"},{"id":"EF15","name":"Scene parameter configuration","category":"Virtual Environment Configuration"},{"id":"EF16","name":"Virtual safety zone definition and enforcement","category":"Virtual Environment Configuration"},{"id":"EF17","name":"In-scene contextual information display","category":"Sensory Feedback and Assistance"},{"id":"EF18","name":"Audio and speech-based feedback delivery","category":"Sensory Feedback and Assistance"},{"id":"EF19","name":"Haptic feedback delivery","category":"Sensory Feedback and Assistance"},{"id":"EF20","name":"Motion sensation simulation","category":"Sensory Feedback and Assistance"},{"id":"EF21","name":"Intelligent real-time user assistance","category":"Sensory Feedback and Assistance"},{"id":"EF22","name":"3D virtual object manipulation","category":"Virtual Object Interaction"},{"id":"EF23","name":"Industrial task and process simulation","category":"Virtual Object Interaction"},{"id":"EF24","name":"User locomotion within the immersive environment","category":"Immersive Environment Navigation"},{"id":"EF25","name":"Real-time user body motion tracking","category":"User and Object Tracking"},{"id":"EF26","name":"Physical object localisation and tracking","category":"User and Object Tracking"},{"id":"EF27","name":"Real-to-virtual spatial synchronisation","category":"User and Object Tracking"},{"id":"EF28","name":"Multi-user collaborative session management","category":"Multi-User Collaboration"},{"id":"EF29","name":"Experience recording and traceability","category":"Multi-User Collaboration"},{"id":"EF30","name":"Inter-user communication","category":"Multi-User Collaboration"},{"id":"EF31","name":"Real-world machine and equipment interfacing","category":"Real-World System Integration"},{"id":"EF32","name":"Physical system contextual augmentation","category":"Real-World System Integration"},{"id":"EF33","name":"Digital twin connectivity and synchronisation","category":"Real-World System Integration"}],"R":[[0,0,0,0,2,0,0,0,2,0,0,0,0,0,2,0,0,0,4,1,0,5,5,2,4,0,3,0,0,0,0,0,0],[0,0,0,0,0,3,0,0,0,0,0,0,0,3,0,0,3,2,3,2,0,3,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,2,0,5,0,3,3,5,2,0,3,3,0,4,0,0,0,0,0,0,0,0,5,5,0,0,0,0,4,0],[0,0,0,0,0,0,1,0,0,0,0,0,2,0,0,1,2,0,0,0,0,0,0,0,0,0,0,5,5,5,0,0,1],[0,0,0,0,0,0,3,0,0,0,0,0,0,3,0,0,3,5,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,5,5,3,2,0,0,0,0,0,0,0,0,0,0,0,0],[1,2,4,0,0,0,0,3,4,0,0,0,0,0,1,0,0,0,2,0,2,4,0,3,4,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0,0,0,0,0,4,0,0,4,4,4,3,0,0,4,0,0,2,5,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,5,1,0,0,0,1,0,0,3,0,0,0,2,2,0,0,0,4,0,0,0,0,0,0,0],[0,4,0,0,0,0,0,0,0,5,5,0,3,3,3,0,0,0,0,0,0,0,4,0,0,0,3,0,0,0,0,2,3],[0,0,0,0,0,4,2,3,0,3,4,5,0,3,0,0,0,0,0,0,1,0,2,0,0,0,0,1,0,0,3,0,2],[0,0,0,0,3,0,0,0,5,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,5,5,0,0,0,0,3,0],[0,2,0,0,0,0,0,0,0,0,0,0,4,0,0,0,3,0,0,0,3,3,5,0,0,1,0,0,2,0,0,0,3],[0,0,0,0,0,2,0,0,0,0,1,4,0,0,0,0,0,1,1,0,3,0,0,0,0,0,0,0,0,0,2,4,3],[0,0,0,0,0,0,0,3,3,0,0,0,0,0,2,3,0,0,2,0,0,5,0,5,5,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,3,0,1,0,0,5,0,0,0,0,2,2,0,1,1,0,5,0,5,0,1,0,0,0,0],[0,0,0,3,0,2,1,0,0,5,5,0,4,3,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,2],[0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,4,5,4,2,3,0,5,0,0,0,0,1,0,0,0,0,0],[0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,2,1,0,3,0,5,0,0,0,0,1,3,0,0,0,0],[0,2,0,0,0,0,0,0,0,0,0,0,0,5,0,0,3,4,4,2,0,3,1,3,0,0,0,0,0,0,0,0,0],[5,2,5,0,0,0,0,0,0,0,0,1,0,4,0,0,5,3,0,0,4,1,0,1,1,2,0,0,0,0,1,1,0],[0,0,0,4,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,4,4,4,5,4],[0,0,0,4,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,2,0,0,0,0,0,0,4,5,3,5,0,4],[0,0,0,5,0,0,0,0,0,3,5,5,1,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0],[5,2,4,0,4,0,2,3,0,0,0,0,0,0,0,0,4,0,0,0,0,3,0,2,3,0,0,0,0,0,0,0,0],[4,4,5,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1,0,0,3,0,4,0,0,0,0,0,3,0,0,0,0],[1,3,0,0,3,2,3,3,3,0,2,0,0,0,3,0,0,0,0,0,0,0,0,0,0,2,5,0,0,0,3,0,0],[4,2,3,0,4,0,2,3,0,0,0,0,0,4,0,5,0,3,2,0,0,3,1,5,3,2,0,0,0,0,0,0,0],[0,0,0,0,0,2,5,3,0,0,4,5,0,4,1,2,0,0,0,0,0,0,0,0,0,2,0,2,2,0,3,0,3],[0,0,0,0,0,0,0,0,4,0,0,0,5,5,0,0,0,4,2,0,0,0,0,0,3,0,5,0,0,3,5,0,5],[2,5,4,5,0,0,0,0,0,3,5,0,3,0,0,0,4,0,0,0,4,0,0,0,0,0,0,0,0,0,0,3,0],[0,2,0,0,4,0,1,0,5,0,0,0,3,4,0,2,0,0,0,0,0,0,0,0,0,5,5,0,1,0,5,0,3],[0,0,0,0,5,0,3,2,5,0,0,0,4,4,0,2,0,0,0,0,0,0,0,0,0,5,5,0,1,0,5,0,3],[0,1,0,0,3,0,0,0,3,0,0,0,0,5,2,4,0,0,0,0,0,2,0,5,3,0,0,0,0,0,0,0,0],[2,0,0,0,2,0,2,0,0,0,0,0,0,4,0,5,0,2,2,3,0,0,0,4,4,0,0,0,1,0,0,0,0],[0,0,0,0,4,0,0,0,3,0,0,0,0,0,0,5,5,0,0,0,2,0,0,2,3,5,3,0,1,0,3,5,0],[0,0,0,0,0,1,5,0,1,5,5,2,1,5,3,0,4,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0]],"studies":[{"id":"S1","xr_technology":"XR","application_domain":"Design","activities":["System Design","Operator Assistance"],"hardware_configuration":"AR HMD + Handheld/Mobile XR Device only","criteria":["CR3","CR20","CR21","CR23","CR25","CR26","CR28","CR30","CR31","CR32","CR33"]},{"id":"S2","xr_technology":"XR","application_domain":"Production","activities":["Machine/Robot/Production-System Monitoring","Operator Assistance","Maintenance and Repair"],"hardware_configuration":"AR HMD only","criteria":["CR7","CR21","CR25","CR28","CR30","CR36"]},{"id":"S3","xr_technology":"XR","application_domain":"Maintenance","activities":["Operator Training","Industrial Safety Awareness","Maintenance and Repair"],"hardware_configuration":"VR HMD + XR Controllers","criteria":["CR19","CR20","CR25","CR26","CR28","CR29","CR31","CR36"]},{"id":"S4","xr_technology":"XR","application_domain":"Production","activities":["Operator Training"],"hardware_configuration":"VR HMD only","criteria":["CR4","CR7","CR10","CR19","CR26","CR32","CR33","CR34"]},{"id":"S5","xr_technology":"XR","application_domain":"Production","activities":["Assembly","Maintenance and Repair","Operator Assistance"],"hardware_configuration":"Not retained","criteria":["CR5","CR7","CR13","CR15","CR18","CR21","CR25","CR26","CR32","CR33"]},{"id":"S6","xr_technology":"AR","application_domain":"Maintenance","activities":["Maintenance and Repair","Operator Assistance"],"hardware_configuration":"AR HMD only","criteria":["CR8","CR13","CR18","CR23","CR25","CR26","CR31","CR35","CR36"]},{"id":"S7","xr_technology":"AR","application_domain":"Production","activities":["Machine/Robot/Production-System Monitoring","Operator Assistance"],"hardware_configuration":"Not retained","criteria":["CR8","CR13","CR22","CR25","CR28","CR30","CR32","CR33"]},{"id":"S8","xr_technology":"AR","application_domain":"Production","activities":["Machine/Robot/Production-System Monitoring","Operator Assistance"],"hardware_configuration":"Handheld/Mobile XR Device only","criteria":["CR8","CR22","CR25","CR28","CR32","CR33","CR34"]},{"id":"S9","xr_technology":"AR","application_domain":"Production","activities":["Quality Control and Inspection","Operator Assistance"],"hardware_configuration":"AR HMD only","criteria":["CR7","CR9","CR21","CR25","CR26","CR28","CR30","CR33"]},{"id":"S10","xr_technology":"AR","application_domain":"Production","activities":["Assembly","Operator Assistance"],"hardware_configuration":"Not retained","criteria":["CR13","CR21","CR23","CR24","CR25","CR26","CR29","CR32","CR33"]},{"id":"S11","xr_technology":"AR","application_domain":"Production","activities":["Operator Training"],"hardware_configuration":"Not retained","criteria":["CR19","CR26","CR29","CR32","CR33","CR35"]},{"id":"S12","xr_technology":"AR","application_domain":"Production","activities":["Machine/Robot/Production-System Monitoring","Operator Assistance"],"hardware_configuration":"AR HMD only","criteria":["CR20","CR25","CR26","CR31","CR37"]},{"id":"S13","xr_technology":"AR","application_domain":"Production","activities":["Operator Training"],"hardware_configuration":"Handheld/Mobile XR Device only","criteria":["CR13","CR20","CR26","CR32","CR33","CR36"]},{"id":"S14","xr_technology":"AR","application_domain":"Production","activities":["Assembly","Operator Assistance"],"hardware_configuration":"Handheld/Mobile XR Device only","criteria":["CR13","CR21","CR26","CR28","CR34"]},{"id":"S15","xr_technology":"AR","application_domain":"Production","activities":["Operator Assistance"],"hardware_configuration":"AR HMD only","criteria":["CR3","CR7","CR12","CR15","CR28","CR30","CR32","CR33","CR36"]},{"id":"S16","xr_technology":"AR","application_domain":"Production","activities":["Assembly","Operator Assistance"],"hardware_configuration":"AR HMD only","criteria":["CR21","CR26","CR28","CR32","CR33"]},{"id":"S17","xr_technology":"VR","application_domain":"Production","activities":["Assembly","Operator Training"],"hardware_configuration":"Not retained","criteria":["CR2","CR8","CR12","CR13","CR21","CR26"]},{"id":"S18","xr_technology":"AR","application_domain":"Production","activities":["Maintenance and Repair","Quality Control and Inspection","Operator Assistance"],"hardware_configuration":"Not retained","criteria":["CR7","CR9","CR13","CR21","CR26","CR32","CR33","CR36"]},{"id":"S19","xr_technology":"AR","application_domain":"Maintenance","activities":["Quality Control and Inspection","Operator Assistance"],"hardware_configuration":"Handheld/Mobile XR Device only","criteria":["CR13","CR21","CR25"]},{"id":"S20","xr_technology":"AR","application_domain":"Maintenance","activities":["Quality Control and Inspection","Operator Assistance"],"hardware_configuration":"AR HMD only","criteria":["CR13","CR20","CR21","CR28"]},{"id":"S21","xr_technology":"AR","application_domain":"Production","activities":["Assembly","Maintenance and Repair","Operator Assistance"],"hardware_configuration":"AR HMD only","criteria":["CR2","CR21","CR26","CR30","CR35","CR36"]},{"id":"S22","xr_technology":"AR","application_domain":"Production","activities":["Assembly","Operator Training"],"hardware_configuration":"AR HMD + Handheld/Mobile XR Device only","criteria":["CR19","CR25","CR26","CR28","CR34"]},{"id":"S23","xr_technology":"AR","application_domain":"Maintenance","activities":["Quality Control and Inspection","Operator Assistance"],"hardware_configuration":"AR HMD only","criteria":["CR19","CR21","CR25","CR34","CR36"]},{"id":"S24","xr_technology":"AR","application_domain":"Production","activities":["Assembly","Operator Assistance"],"hardware_configuration":"AR HMD only","criteria":["CR25"]},{"id":"S25","xr_technology":"AR","application_domain":"Design","activities":["Assembly","Maintenance and Repair","Operator Assistance"],"hardware_configuration":"AR HMD only","criteria":["CR3","CR12","CR25","CR29","CR31","CR34"]},{"id":"S26","xr_technology":"AR","application_domain":"Production","activities":["Assembly","Operator Assistance"],"hardware_configuration":"Not retained","criteria":["CR4","CR7","CR8","CR34"]},{"id":"S27","xr_technology":"AR","application_domain":"Production","activities":["Assembly","Operator Assistance"],"hardware_configuration":"Not retained","criteria":["CR8","CR13","CR21","CR31"]},{"id":"S28","xr_technology":"AR","application_domain":"Production","activities":["Assembly","Maintenance and Repair","Operator Assistance"],"hardware_configuration":"AR HMD only","criteria":["CR7","CR30","CR32","CR33","CR37"]},{"id":"S29","xr_technology":"AR","application_domain":"Production","activities":["Assembly","Maintenance and Repair","Operator Training","Operator Assistance"],"hardware_configuration":"Not retained","criteria":["CR9","CR17","CR22","CR24","CR27","CR29","CR32","CR33"]},{"id":"S30","xr_technology":"AR","application_domain":"Design","activities":["Product Design"],"hardware_configuration":"Not retained","criteria":["CR8","CR14","CR29","CR31","CR32","CR33"]},{"id":"S31","xr_technology":"AR","application_domain":"Maintenance","activities":["Operator Training","Maintenance and Repair","Operator Assistance","Machine/Robot/Production-System Monitoring"],"hardware_configuration":"AR HMD only","criteria":["CR4","CR8","CR23","CR30","CR36"]},{"id":"S32","xr_technology":"AR","application_domain":"Maintenance","activities":["Maintenance and Repair","Operator Assistance"],"hardware_configuration":"Handheld/Mobile XR Device only","criteria":["CR8","CR25","CR26","CR29","CR32","CR33"]},{"id":"S33","xr_technology":"AR","application_domain":"Production","activities":["Product Design"],"hardware_configuration":"Not retained","criteria":["CR8","CR14","CR22","CR29","CR34"]},{"id":"S34","xr_technology":"AR","application_domain":"Production","activities":["Assembly","Operator Assistance"],"hardware_configuration":"AR HMD only","criteria":["CR13","CR25","CR28","CR32","CR33","CR37"]},{"id":"S35","xr_technology":"AR","application_domain":"Production","activities":["Assembly","Operator Assistance"],"hardware_configuration":"Not retained","criteria":["CR7","CR15","CR25","CR28","CR36"]},{"id":"S36","xr_technology":"AR","application_domain":"Production","activities":["Assembly","Operator Assistance"],"hardware_configuration":"Not retained","criteria":["CR7","CR21","CR26","CR33"]},{"id":"S37","xr_technology":"AR","application_domain":"Maintenance","activities":["Maintenance and Repair","Operator Assistance"],"hardware_configuration":"AR HMD only","criteria":["CR5","CR7","CR8","CR13","CR30","CR32","CR33"]},{"id":"S38","xr_technology":"VR","application_domain":"Production","activities":["Machine/Robot/Production-System Monitoring","Operator Assistance"],"hardware_configuration":"VR HMD + XR Controllers + Motion/Positional Tracking","criteria":["CR7","CR15","CR23","CR30","CR32","CR33","CR34"]},{"id":"S39","xr_technology":"VR","application_domain":"Design","activities":["Product Design","Ergonomic Evaluation"],"hardware_configuration":"VR HMD only","criteria":["CR13","CR16","CR28","CR29","CR35"]},{"id":"S40","xr_technology":"VR","application_domain":"Production","activities":["Not classifiable"],"hardware_configuration":"VR HMD + XR Controllers + Motion/Positional Tracking","criteria":["CR5","CR6","CR8","CR15","CR16","CR20","CR25","CR35"]},{"id":"S41","xr_technology":"XR","application_domain":"Design","activities":["System Design"],"hardware_configuration":"Not retained","criteria":["CR14","CR20","CR22","CR23","CR25","CR28"]},{"id":"S42","xr_technology":"VR","application_domain":"Design","activities":["System Design","Ergonomic Evaluation"],"hardware_configuration":"Not retained","criteria":["CR13","CR14","CR26","CR28","CR35"]},{"id":"S43","xr_technology":"VR","application_domain":"Production","activities":["Operator Training"],"hardware_configuration":"VR HMD only","criteria":["CR7","CR13","CR16","CR28","CR29","CR35"]},{"id":"S44","xr_technology":"VR","application_domain":"Design","activities":["Product Design"],"hardware_configuration":"VR HMD only","criteria":["CR1","CR10","CR13","CR25","CR30","CR36"]},{"id":"S45","xr_technology":"VR","application_domain":"Production","activities":["Machine/Robot/Production-System Monitoring","Operator Assistance"],"hardware_configuration":"VR HMD + XR Controllers","criteria":["CR1","CR16","CR22","CR23","CR25","CR26","CR32","CR33"]},{"id":"S46","xr_technology":"VR","application_domain":"Production","activities":["Operator Training"],"hardware_configuration":"VR HMD only","criteria":["CR1","CR13","CR18","CR19","CR26","CR29"]},{"id":"S47","xr_technology":"VR","application_domain":"Production","activities":["Assembly","Operator Assistance"],"hardware_configuration":"VR HMD only","criteria":["CR10","CR17","CR24","CR25","CR28","CR29","CR34"]},{"id":"S48","xr_technology":"XR","application_domain":"Production","activities":["Operator Training"],"hardware_configuration":"Not retained","criteria":["CR4","CR11","CR13","CR25","CR26"]},{"id":"S49","xr_technology":"VR","application_domain":"Production","activities":["Operator Training"],"hardware_configuration":"Not retained","criteria":["CR8","CR13","CR19","CR21","CR35"]},{"id":"S50","xr_technology":"VR","application_domain":"Production","activities":["Operator Training"],"hardware_configuration":"VR HMD + XR Controllers","criteria":["CR7","CR8","CR24","CR25","CR26","CR29"]},{"id":"S51","xr_technology":"VR","application_domain":"Design","activities":["System Design","Ergonomic Evaluation"],"hardware_configuration":"VR HMD + XR Controllers + Motion/Positional Tracking","criteria":["CR13","CR16","CR28","CR29","CR32","CR33","CR35"]},{"id":"S52","xr_technology":"VR","application_domain":"Production","activities":["Operator Training"],"hardware_configuration":"VR HMD only","criteria":["CR18","CR19","CR20","CR26"]},{"id":"S53","xr_technology":"VR","application_domain":"Design","activities":["System Design","Ergonomic Evaluation"],"hardware_configuration":"VR HMD + XR Controllers + Motion/Positional Tracking","criteria":["CR4","CR7","CR16","CR28","CR34","CR36"]},{"id":"S54","xr_technology":"VR","application_domain":"Production","activities":["System Design","Ergonomic Evaluation"],"hardware_configuration":"Not retained","criteria":["CR13","CR16","CR25","CR28","CR29","CR34"]},{"id":"S55","xr_technology":"MR","application_domain":"Maintenance","activities":["Maintenance and Repair","Operator Assistance","Machine/Robot/Production-System Monitoring"],"hardware_configuration":"AR HMD + Handheld/Mobile XR Device only","criteria":["CR7","CR13","CR22","CR23","CR25","CR32","CR33"]}]};
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var showAll = false, last = null;
+  var LABEL = { xr_technology: 'XR technology', hardware_configuration: 'XR hardware', application_domain: 'Application domain', industrial_activity: 'Industrial activity' };
+  var BETA_KEY = { xr_technology: 'XR technology', application_domain: 'Application domain', industrial_activity: 'Industrial activity', hardware_configuration: 'Hardware configuration' };
+
+  function fill(sel, values, keep) {
+    sel.innerHTML = '';
+    values.forEach(function (v) { var o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
+    if (keep && values.indexOf(keep) !== -1) sel.value = keep;
+  }
+  function fmt(x, d) { return x.toFixed(d === undefined ? 4 : d); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function current() { return { technology: $('technology').value, hardware: $('hardware').value, domain: $('domain').value, activity: $('activity').value }; }
+
+  function render() {
+    var cfg = current(), res = XRP.prioritize(DATA, cfg); last = { cfg: cfg, res: res };
+    var text = cfg.technology + ' · ' + cfg.hardware + ' · ' + cfg.domain + ' · ' + cfg.activity;
+    $('cfg').textContent = 'Configuration: ' + text; $('cfg2').textContent = 'Configuration: ' + text;
+    $('ef-title').textContent = 'Ranked Engineering Features (' + (showAll ? 'all 33' : 'Top 10 of 33') + ')';
+    $('toggle').textContent = showAll ? 'Show Top 10' : 'Show all 33';
+    var list = showAll ? res.ranking : res.ranking.slice(0, 10), max = res.ranking[0].score;
+    $('ef-body').innerHTML = list.map(function (e) {
+      return '<tr><td class="rk">' + e.rank + '</td><td>' + esc(e.id) + ' — ' + esc(e.name) + '</td><td class="bar"><div class="barwrap"><div class="bar"><i style="width:' + (100 * e.score / max).toFixed(1) + '%"></i></div></div></td><td class="sc">' + fmt(e.score) + '</td></tr>';
+    }).join('');
+    var rows = DATA.crs.map(function (c, i) { return { c: c, wl: res.wLit[i], wt: res.wT[i] }; }).sort(function (a, b) { return b.wt - a.wt; });
+    $('cr-body').innerHTML = rows.map(function (r) {
+      return '<tr><td>' + esc(r.c.id) + '</td><td>' + esc(r.c.name) + '</td><td>' + fmt(r.c.w_indus) + '</td><td>' + fmt(r.wl) + '</td><td><b>' + fmt(r.wt) + '</b></td></tr>';
+    }).join('');
+    var mods = { xr_technology: cfg.technology, hardware_configuration: cfg.hardware, application_domain: cfg.domain, industrial_activity: cfg.activity };
+    var lowDims = [], html = '<b>Studies supporting each modality</b><br>';
+    ['xr_technology', 'hardware_configuration', 'application_domain', 'industrial_activity'].forEach(function (d) {
+      var n = res.support[d], low = n < XRP.LOW_SUPPORT_THRESHOLD;
+      if (low) lowDims.push(LABEL[d] + ' (' + mods[d] + ': n = ' + n + ')');
+      html += LABEL[d] + ': <b' + (low ? ' class="warn"' : '') + '>' + n + '</b><br>';
+    });
+    $('support').innerHTML = html;
+    $('low').innerHTML = lowDims.length ? '<div class="low">Low study support (fewer than ' + XRP.LOW_SUPPORT_THRESHOLD + ' studies): ' + esc(lowDims.join('; ')) + '. Interpret the ranking with caution.</div>' : '';
+  }
+
+  function onTechnology() { fill($('hardware'), XRP.HARDWARE_BY_TECHNOLOGY[$('technology').value]); render(); }
+
+  fill($('technology'), XRP.XR_TECHNOLOGIES, 'VR');
+  fill($('hardware'), XRP.HARDWARE_BY_TECHNOLOGY.VR, 'VR HMD only');
+  fill($('domain'), XRP.DOMAINS, 'Production');
+  fill($('activity'), XRP.ACTIVITIES, 'Assembly');
+  $('technology').addEventListener('change', onTechnology);
+  ['hardware', 'domain', 'activity'].forEach(function (id) { $(id).addEventListener('change', render); });
+  $('toggle').addEventListener('click', function () { showAll = !showAll; render(); });
+  $('tab-ef').addEventListener('click', function () { tab(true); });
+  $('tab-cr').addEventListener('click', function () { tab(false); });
+  function tab(ef) {
+    $('view-ef').hidden = !ef; $('view-cr').hidden = ef;
+    $('tab-ef').setAttribute('aria-selected', ef); $('tab-cr').setAttribute('aria-selected', !ef);
+  }
+  $('export').addEventListener('click', function () {
+    var c = last.cfg, lines = ['# technology=' + c.technology + '; hardware=' + c.hardware + '; domain=' + c.domain + '; activity=' + c.activity, 'rank,id,name,priority'];
+    last.res.ranking.forEach(function (e) { lines.push([e.rank, e.id, '"' + e.name.replace(/"/g, '""') + '"', e.score.toFixed(6)].join(',')); });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([lines.join('\n') + '\n'], { type: 'text/csv' }));
+    a.download = 'ef_ranking.csv'; document.body.appendChild(a); a.click(); a.remove();
+  });
+  var p = DATA.params, rows = ['<tr><td>α (industrial share)</td><td>' + p.alpha + '</td></tr>'];
+  Object.keys(p.beta).forEach(function (k) { rows.push('<tr><td>β ' + BETA_KEY[k] + '</td><td>' + p.beta[k].toFixed(6) + '</td></tr>'); });
+  $('params').innerHTML = rows.join('');
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+id,name,w_indus
+CR1,Ability of acting the same way as in the real world,0.0324
+CR2,Ability of creating surprising effect,0.0301
+CR3,Ability of displaying virtual and real objects,0.0190
+CR4,Ability of sharing the environment with other users,0.0278
+CR5,Ability to engage different senses,0.0329
+CR6,Ability to feel sensory feedback,0.0269
+CR7,Ability to interact naturally and intuitively,0.0222
+CR8,Ability to perceive realistic feedback,0.0245
+CR9,Ability to Search for and Recognize Virtual Objects,0.0287
+CR10,Accuracy of representation to Requirements,0.0204
+CR11,Application development cost,0.0264
+CR12,Capacity for Real Object Tracking,0.0195
+CR13,Capacity of anticipating the results of actions,0.0347
+CR14,Capacity of innovating,0.0259
+CR15,Capacity of interacting freely,0.0324
+CR16,Capacity of synchronizing real movements with those...,0.0134
+CR17,Capacity to adapt to the new software updates,0.0338
+CR18,Capacity to feel emotional and cognitive engagement,0.0306
+CR19,Capacity to motivate the user,0.0278
+CR20,Capacity to provide pleasure and satisfactory,0.0213
+CR21,Cognitive load,0.0259
+CR22,Data communication,0.0287
+CR23,Data security,0.0278
+CR24,Ease of content creation,0.0296
+CR25,Ease of Handling,0.0222
+CR26,Ease of learning,0.0264
+CR27,Ease of setup,0.0292
+CR28,Ergonomic quality,0.0185
+CR29,Implementation cost,0.0320
+CR30,Latency,0.0361
+CR31,Relevance of content,0.0301
+CR32,Reliability,0.0269
+CR33,Robustness,0.0366
+CR34,Smooth Navigation,0.0176
+CR35,User health,0.0320
+CR36,User safety,0.0287
+CR37,Visual Quality,0.0208

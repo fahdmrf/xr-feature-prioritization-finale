@@ -1,0 +1,34 @@
+id,name,category
+EF1,User profile-based experience customisation,User Context and Profiling
+EF2,Industrial domain-based experience adaptation,User Context and Profiling
+EF3,Step-by-step user guidance,User Context and Profiling
+EF4,User-defined input data integration,User Context and Profiling
+EF5,Physical environment detection and adaptation,User Context and Profiling
+EF6,Multi-paradigm XR operation,XR Technical Infrastructure
+EF7,Multi-device display rendering,XR Technical Infrastructure
+EF8,Peripheral device interfacing,XR Technical Infrastructure
+EF9,Spatial and object position tracking,XR Technical Infrastructure
+EF10,Multi-format digital content handling,Digital Content Management
+EF11,External asset importation,Digital Content Management
+EF12,In-application digital content creation,Digital Content Management
+EF13,Dynamic real-time content update,Digital Content Management
+EF14,Runtime rendering performance optimisation,Digital Content Management
+EF15,Scene parameter configuration,Virtual Environment Configuration
+EF16,Virtual safety zone definition and enforcement,Virtual Environment Configuration
+EF17,In-scene contextual information display,Sensory Feedback and Assistance
+EF18,Audio and speech-based feedback delivery,Sensory Feedback and Assistance
+EF19,Haptic feedback delivery,Sensory Feedback and Assistance
+EF20,Motion sensation simulation,Sensory Feedback and Assistance
+EF21,Intelligent real-time user assistance,Sensory Feedback and Assistance
+EF22,3D virtual object manipulation,Virtual Object Interaction
+EF23,Industrial task and process simulation,Virtual Object Interaction
+EF24,User locomotion within the immersive environment,Immersive Environment Navigation
+EF25,Real-time user body motion tracking,User and Object Tracking
+EF26,Physical object localisation and tracking,User and Object Tracking
+EF27,Real-to-virtual spatial synchronisation,User and Object Tracking
+EF28,Multi-user collaborative session management,Multi-User Collaboration
+EF29,Experience recording and traceability,Multi-User Collaboration
+EF30,Inter-user communication,Multi-User Collaboration
+EF31,Real-world machine and equipment interfacing,Real-World System Integration
+EF32,Physical system contextual augmentation,Real-World System Integration
+EF33,Digital twin connectivity and synchronisation,Real-World System Integration

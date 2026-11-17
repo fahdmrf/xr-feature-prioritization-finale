@@ -1,0 +1,12 @@
+{
+  "alpha": 0.1462,
+  "beta": {
+    "xr_technology": 0.259289,
+    "application_domain": 0.255971,
+    "industrial_activity": 0.303744,
+    "hardware_configuration": 0.180996
+  },
+  "n_valid_questionnaire_responses_cr": 24,
+  "n_valid_questionnaire_responses_ef": 22,
+  "n_studies": 55
+}
